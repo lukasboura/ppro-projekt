@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+	   		http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+			http://www.springframework.org/schema/security 
+			http://www.springframework.org/schema/security/spring-security-3.0.xsd">
+	
+	<bean id="securityContextPersistenceFilter" class="org.springframework.security.web.context.SecurityContextPersistenceFilter">
+    <property name='securityContextRepository'>
+        <bean class='org.springframework.security.web.context.HttpSessionSecurityContextRepository'>
+            <property name='allowSessionCreation' value='false' />
+        </bean>
+    </property>
+	</bean>
+	
+	<bean id="ep403" class="org.springframework.security.web.authentication.Http403ForbiddenEntryPoint"/>
+
+	
+	<security:http auto-config="true" entry-point-ref="ep403" use-expressions="true" create-session="never" access-denied-page="/auth/denied">
+		<security:intercept-url pattern="/auth/*" access="permitAll"/>
+		<security:intercept-url pattern="/*.css" access="permitAll"/>
+		<security:intercept-url pattern="/*.js" access="permitAll"/>
+		<security:intercept-url pattern="/" access="permitAll"/>
+		<security:intercept-url pattern="/**" access="hasRole('ROLE_USER')"/>
+		
+		<security:form-login
+				login-page="/auth/login" 
+				authentication-failure-url="/auth/login?error=true" 
+				default-target-url="/home"
+				always-use-default-target="true"
+				/>
+		<security:logout 
+				invalidate-session="true" 
+				logout-success-url="/auth/login" 
+				logout-url="/auth/logout"/>
+	
+	</security:http>
+	
+	<security:authentication-manager>
+	        <security:authentication-provider user-service-ref="customUserDetailsService">
+	        		<security:password-encoder ref="passwordEncoder"/>
+	        </security:authentication-provider>
+	</security:authentication-manager>
+	
+	<bean class="org.springframework.security.authentication.encoding.Md5PasswordEncoder" id="passwordEncoder"/>
+
+	<bean id="customUserDetailsService" class="cz.uhk.ppro.service.CustomUserDetailsService"/>
+	
+</beans>
